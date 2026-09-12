@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 
+/* ─── Browser Token ─── */
+function getOrCreateToken() {
+  let token = localStorage.getItem("bs-token");
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem("bs-token", token);
+  }
+  return token;
+}
+
 /* ─── Palette & Typography ─── */
 const P = {
   bg: "#FFF7F3", card: "#FFFFFF", blush: "#F2C4CE", rose: "#D4919E",
@@ -21,6 +31,8 @@ export default function App() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [toast, setToast] = useState(null);
   const [filter, setFilter] = useState("all");
+
+  const browserToken = getOrCreateToken();
 
   /* ── Fetch gifts ── */
   const fetchGifts = useCallback(async () => {
@@ -62,9 +74,9 @@ export default function App() {
     if (!name) return;
     const { error } = await supabase
       .from("gifts")
-      .update({ claimed_by: name })
+      .update({ claimed_by: name, claimed_token: browserToken })
       .eq("id", id)
-      .is("claimed_by", null); // optimistic lock: only if still null
+      .is("claimed_by", null);
 
     if (error) {
       showToastMsg("Alguien ya reservó este regalo");
@@ -78,9 +90,21 @@ export default function App() {
   };
 
   const unclaim = async (id) => {
-    const g = gifts.find((x) => x.id === id);
-    if (g?.claimed_by !== guestName.trim()) return;
-    await supabase.from("gifts").update({ claimed_by: null }).eq("id", id);
+    const gift = gifts.find((x) => x.id === id);
+    if (!gift || gift.claimed_token !== browserToken) {
+      showToastMsg("Solo puedes liberar regalos que reservaste desde este dispositivo");
+      return;
+    }
+    const { error } = await supabase
+      .from("gifts")
+      .update({ claimed_by: null, claimed_token: null })
+      .eq("id", id)
+      .eq("claimed_token", browserToken);
+
+    if (error) {
+      showToastMsg("No se pudo liberar el regalo");
+      return;
+    }
     showToastMsg("Regalo liberado");
   };
 
@@ -287,7 +311,7 @@ export default function App() {
       {/* Gift list */}
       <div style={s.giftList}>
         {filtered.map((gift) => {
-          const mine = gift.claimed_by === guestName.trim();
+          const isMine = gift.claimed_token === browserToken;
           const taken = !!gift.claimed_by;
           const expanding = claimingId === gift.id;
           const links = gift.links || [];
@@ -299,8 +323,8 @@ export default function App() {
                 ...s.giftCard,
                 ...(taken
                   ? {
-                      backgroundColor: mine ? "#F0F7F0" : "#FAFAFA",
-                      borderColor: mine ? P.claimedBorder : "#E8E8E8",
+                      backgroundColor: isMine ? "#F0F7F0" : "#FAFAFA",
+                      borderColor: isMine ? P.claimedBorder : "#E8E8E8",
                     }
                   : {}),
               }}
@@ -311,7 +335,7 @@ export default function App() {
                   <h3
                     style={{
                       ...s.giftName,
-                      ...(taken && !mine ? { color: "#aaa" } : {}),
+                      ...(taken && !isMine ? { color: "#aaa" } : {}),
                     }}
                   >
                     {gift.name}
@@ -341,18 +365,18 @@ export default function App() {
                   style={{
                     ...s.statusBadge,
                     backgroundColor: taken
-                      ? mine
+                      ? isMine
                         ? "#E8F5E8"
                         : "#F5F5F5"
                       : P.cream,
                     color: taken
-                      ? mine
+                      ? isMine
                         ? "#4A7A4A"
                         : "#999"
                       : P.deepRose,
                   }}
                 >
-                  {taken ? (mine ? "Tuyo" : "Reservado") : "Disponible"}
+                  {taken ? (isMine ? "Tuyo" : "Reservado") : "Disponible"}
                 </span>
               </div>
 
@@ -402,7 +426,7 @@ export default function App() {
                 </div>
               )}
 
-              {mine && (
+              {isMine && (
                 <button
                   onClick={() => unclaim(gift.id)}
                   style={s.unclaimBtn}

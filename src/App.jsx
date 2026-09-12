@@ -217,6 +217,51 @@ export default function App() {
             <p style={s.msgSignNames}>Óscar, Catalina & Eloise 💕</p>
             <Divider />
             <button
+              onClick={() => setScreen("howto")}
+              style={{ ...s.btnPrimary, marginTop: 8 }}
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── How It Works ─── */
+  if (screen === "howto") {
+    return (
+      <div style={s.page}>
+        <div style={s.welcomeWrap}>
+          <div
+            style={{
+              ...s.welcomeCard,
+              padding: "44px 32px 40px",
+              maxWidth: 460,
+            }}
+          >
+            <div style={s.floralRow}>📋</div>
+            <h2 style={s.msgTitle}>¿Cómo funciona?</h2>
+            <div style={s.msgBody}>
+              <div style={s.howtoStep}>
+                <span style={s.howtoNum}>1</span>
+                <p>Explora la lista de regalos sugeridos. Cada uno tiene enlaces para que veas el producto, pero recuerda que son solo referencias.</p>
+              </div>
+              <div style={s.howtoStep}>
+                <span style={s.howtoNum}>2</span>
+                <p>Si quieres reservar un regalo, presiona <strong>"Reservar este regalo"</strong> y confirma. Tu nombre quedará visible para que los demás sepan que ya está cubierto.</p>
+              </div>
+              <div style={s.howtoStep}>
+                <span style={s.howtoNum}>3</span>
+                <p>Solo puedes liberar un regalo desde el mismo celular o computador donde lo reservaste. Si necesitas hacer un cambio, escríbenos.</p>
+              </div>
+              <div style={s.howtoStep}>
+                <span style={s.howtoNum}>💡</span>
+                <p>Puedes reservar <strong>uno o más regalos</strong>, y no es obligatorio elegir de la lista. ¡Cualquier detalle es bienvenido!</p>
+              </div>
+            </div>
+            <Divider />
+            <button
               onClick={() => setScreen("registry")}
               style={{ ...s.btnPrimary, marginTop: 8 }}
             >
@@ -671,6 +716,25 @@ const s = {
     color: P.deepRose,
     textAlign: "right",
     marginBottom: 4,
+  },
+
+  howtoStep: {
+    display: "flex",
+    gap: 14,
+    alignItems: "flex-start",
+  },
+  howtoNum: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: P.cream,
+    color: P.deepRose,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 14,
+    fontWeight: 700,
+    flexShrink: 0,
   },
 
   header: {
